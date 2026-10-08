@@ -1,0 +1,9 @@
+(function(root){
+  'use strict';
+  const MAX=7;
+  function create(){return {version:1,title:'',rows:5,cols:5,mode:'edit',free:false,freeAt:[2,2],cells:Array.from({length:MAX},()=>Array.from({length:MAX},()=>({text:'',checked:false})))};}
+  function checked(s,r,c){return (s.free&&s.freeAt[0]===r&&s.freeAt[1]===c)||s.cells[r][c].checked;}
+  function lines(s){const candidates=[];for(let r=0;r<s.rows;r++)candidates.push(Array.from({length:s.cols},(_,c)=>[r,c]));for(let c=0;c<s.cols;c++)candidates.push(Array.from({length:s.rows},(_,r)=>[r,c]));if(s.rows===s.cols){candidates.push(Array.from({length:s.rows},(_,i)=>[i,i]));candidates.push(Array.from({length:s.rows},(_,i)=>[i,s.cols-1-i]));}return candidates.filter(line=>line.every(([r,c])=>checked(s,r,c)));}
+  function restore(raw){const s=create();if(!raw||raw.version!==1)throw Error('Unsupported data');for(const k of ['rows','cols'])if(!Number.isInteger(raw[k])||raw[k]<3||raw[k]>MAX)throw Error('Invalid dimensions');s.rows=raw.rows;s.cols=raw.cols;s.title=typeof raw.title==='string'?raw.title.slice(0,100):'';s.mode=raw.mode==='play'?'play':'edit';s.free=raw.free===true;if(Array.isArray(raw.freeAt)&&raw.freeAt.length===2&&raw.freeAt.every(x=>Number.isInteger(x)&&x>=0&&x<MAX))s.freeAt=raw.freeAt;if(!Array.isArray(raw.cells)||raw.cells.length!==MAX)throw Error('Invalid cells');for(let r=0;r<MAX;r++){if(!Array.isArray(raw.cells[r])||raw.cells[r].length!==MAX)throw Error('Invalid row');for(let c=0;c<MAX;c++){const cell=raw.cells[r][c];if(!cell||typeof cell.text!=='string')throw Error('Invalid cell');s.cells[r][c]={text:cell.text.slice(0,2000),checked:cell.checked===true};}}return s;}
+  const api={MAX,create,checked,lines,restore};root.BingoCore=api;if(typeof module!=='undefined')module.exports=api;
+})(typeof window!=='undefined'?window:globalThis);
